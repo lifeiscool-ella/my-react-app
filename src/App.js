@@ -1,48 +1,30 @@
 import React, { Component } from 'react';
+import TOC from './components/TOC';
+import Subject from './components/Subject';
+import Content from './components/Content';
 import './App.css';
 
-class Subject extends Component {
-  render() {
-    return (
-      <header>
-        <h2>Subject Component</h2>
-      </header>
-    );
-  }
-}
-
-class TOC extends Component {
-  render() {
-    return (
-      <nav>
-        <ul>
-          <li>Item 1</li>
-          <li>Item 2</li>
-          <li>Item 3</li>
-        </ul>
-      </nav>
-    );
-  }
-} 
-
-class Content extends Component {
-  render() {
-    return (
-      <article>
-        <p>This is the content area.</p>
-      </article>
-    );
-  }
-}
-
 class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      subject:{title: 'WEB', sub: 'world wide web!'},
+      contents:[
+        {id: 1, title: 'HTML', desc: 'HTML is HyperText Markup Language.'},
+        {id: 2, title: 'CSS', desc: 'CSS is Cascading Style Sheets.'},
+        {id: 3, title: 'JavaScript', desc: 'JavaScript is a programming language.'} 
+      ]
+    };
+  } 
+
   render() {
     return (
       <div className="App">
        Hello, React!
-       <Subject />
-       <TOC />
-       <Content />
+       <Subject title={this.state.subject.title} sub={this.state.subject.sub} />
+       <Subject title="React" sub="For UI" />
+       <TOC contents={this.state.contents} />
+       <Content title="HTML" desc="HTML is HyperText Markup Language."/>
     </div>
   );
   }
