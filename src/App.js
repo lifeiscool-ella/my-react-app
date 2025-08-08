@@ -1,14 +1,16 @@
 import React, { Component } from 'react';
 import TOC from './components/TOC';
 import Subject from './components/Subject';
-import Content from './components/Content';
+import ReadContent from './components/ReadContent';
+import CreateContent from './components/CreateContent';
 import './App.css';
 
 class App extends Component {
   constructor(props) {
     super(props);
+    this.max_content_id = 3; 
     this.state = {
-      mode:'welcome',
+      mode:'create',
       selected_content_id: 2,
       subject:{title: 'WEB', sub: 'world wide web!'},
       welcome:{title: 'Welcome', desc: 'Hello, React!'},
@@ -21,10 +23,11 @@ class App extends Component {
   } 
 
   render() {
-    var _title, _desc = null;
+    var _title, _desc, _article = null;
     if(this.state.mode === 'welcome') {
       _title = this.state.welcome.title;
       _desc = this.state.welcome.desc;
+      _article = <ReadContent title={_title} desc={_desc} />;
     } else if(this.state.mode === 'read') {
       var i = 0;
       while(i < this.state.contents.length) {
@@ -36,11 +39,33 @@ class App extends Component {
         }
         i = i + 1;
       }
-    } else {
-      // Default case, e.g., if no content is selected
-      // This can be adjusted based on your requirements  
-      _title = this.state.contents[0].title; // Example for read mode
-      _desc = this.state.contents[0].desc; // Example for read mode
+      _article = <ReadContent title={_title} desc={_desc} />;
+    } else if(this.state.mode === 'create') {
+        _article = <CreateContent onSubmit={function(_title, _desc) {
+          this.max_content_id = this.max_content_id + 1;
+          // this.state.contents.push({
+          //   id: this.max_content_id,
+          //   title: _title,
+          //   desc: _desc
+          // });
+          var _contensts = this.state.contents.concat({
+            id: this.max_content_id,
+            title: _title,
+            desc: _desc
+          });
+          this.setState({
+            contents: _contensts
+          });
+        }.bind(this)} />;
+    } else if(this.state.mode === 'update') {
+      var content = this.state.contents.find(content => content.id === this.state.selected_content_id);
+      if (content) {
+        _title = content.title;
+        _desc = content.desc;
+        _article = <CreateContent title={_title} desc={_desc} />;
+      } else {
+        _title = 'Content Not Found';
+      }
     } 
     return (
       <div className="App">
@@ -58,14 +83,14 @@ class App extends Component {
          }.bind(this)}>{this.state.subject.title}</a></h1>
          <p>{this.state.subject.sub}</p>
        </header> */}
-       <Subject title="React" sub="For UI" />
+       {/* <Subject title="React" sub="For UI" /> */}
        <TOC onChangePage={function(id){
          this.setState({
            mode: 'read',
            selected_content_id: Number(id)
          });
        }.bind(this)} contents={this.state.contents} />
-       <Content title={_title} desc={_desc}/>
+       <ReadContent title={_title} desc={_desc}/>
     </div>
   );
   }
