@@ -1,99 +1,163 @@
-import React, { Component } from 'react';
-import TOC from './components/TOC';
-import Subject from './components/Subject';
-import ReadContent from './components/ReadContent';
-import CreateContent from './components/CreateContent';
+import logo from './logo.svg';
 import './App.css';
+import {useState} from 'react';
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.max_content_id = 3; 
-    this.state = {
-      mode:'create',
-      selected_content_id: 2,
-      subject:{title: 'WEB', sub: 'world wide web!'},
-      welcome:{title: 'Welcome', desc: 'Hello, React!'},
-      contents:[
-        {id: 1, title: 'HTML', desc: 'HTML is HyperText Markup Language.'},
-        {id: 2, title: 'CSS', desc: 'CSS is Cascading Style Sheets.'},
-        {id: 3, title: 'JavaScript', desc: 'JavaScript is a programming language.'} 
-      ]
-    };
-  } 
-
-  render() {
-    var _title, _desc, _article = null;
-    if(this.state.mode === 'welcome') {
-      _title = this.state.welcome.title;
-      _desc = this.state.welcome.desc;
-      _article = <ReadContent title={_title} desc={_desc} />;
-    } else if(this.state.mode === 'read') {
-      var i = 0;
-      while(i < this.state.contents.length) {
-        var data = this.state.contents[i];
-        if(data.id === this.state.selected_content_id) {
-          _title = data.title;
-          _desc = data.desc;
+function Article(props){
+  return <article>
+    <h2>{props.title}</h2>
+    {props.body}
+  </article>
+}
+function Header(props){
+  return <header>
+    <h1><a href="/" onClick={(event)=>{
+      event.preventDefault();
+      props.onChangeMode();
+    }}>{props.title}</a></h1>
+  </header>
+}
+function Nav(props){
+  const lis = []
+  for(let i=0; i<props.topics.length; i++){
+    let t = props.topics[i];
+    lis.push(<li key={t.id}>
+      <a id={t.id} href={'/read/'+t.id} onClick={event=>{
+        event.preventDefault();
+        props.onChangeMode(Number(event.target.id));
+      }}>{t.title}</a>
+    </li>)
+  }
+  return <nav>
+    <ol>
+      {lis}
+    </ol>
+  </nav>
+}
+function Create(props){
+  return <article>
+    <h2>Create</h2>
+    <form onSubmit={event=>{
+      event.preventDefault();
+      const title = event.target.title.value;
+      const body = event.target.body.value;
+      props.onCreate(title, body);
+    }}>
+      <p><input type="text" name="title" placeholder="title"/></p>
+      <p><textarea name="body" placeholder="body"></textarea></p>
+      <p><input type="submit" value="Create"></input></p>
+    </form>
+  </article>
+}
+function Update(props){
+  const [title, setTitle] = useState(props.title);
+  const [body, setBody] = useState(props.body);
+  return <article>
+    <h2>Update</h2>
+    <form onSubmit={event=>{
+      event.preventDefault();
+      const title = event.target.title.value;
+      const body = event.target.body.value;
+      props.onUpdate(title, body);
+    }}>
+      <p><input type="text" name="title" placeholder="title" value={title} onChange={event=>{
+        setTitle(event.target.value);
+      }}/></p>
+      <p><textarea name="body" placeholder="body" value={body} onChange={event=>{
+        setBody(event.target.value);
+      }}></textarea></p>
+      <p><input type="submit" value="Update"></input></p>
+    </form>
+  </article>
+}
+function App() {
+  const [mode, setMode] = useState('WELCOME');
+  const [id, setId] = useState(null);
+  const [nextId, setNextId] = useState(4);
+  const [topics, setTopics] = useState([
+    {id:1, title:'html', body:'html is ...'},
+    {id:2, title:'css', body:'css is ...'},
+    {id:3, title:'javascript', body:'javascript is ...'}
+  ]);
+  let content = null;
+  let contextControl = null;
+  if(mode === 'WELCOME'){
+    content = <Article title="Welcome" body="Hello, WEB"></Article>
+  } else if(mode === 'READ'){
+    let title, body = null;
+    for(let i=0; i<topics.length; i++){
+      if(topics[i].id === id){
+        title = topics[i].title;
+        body = topics[i].body;
+      }
+    }
+    content = <Article title={title} body={body}></Article>
+    contextControl = <>
+      <li><a href={'/update/'+id} onClick={event=>{
+        event.preventDefault();
+        setMode('UPDATE');
+      }}>Update</a></li>
+      <li><input type="button" value="Delete" onClick={()=>{
+        const newTopics = []
+        for(let i=0; i<topics.length; i++){
+          if(topics[i].id !== id){
+            newTopics.push(topics[i]);
+          }
+        }
+        setTopics(newTopics);
+        setMode('WELCOME');
+      }} /></li>
+    </>
+  } else if(mode === 'CREATE'){
+    content = <Create onCreate={(_title, _body)=>{
+      const newTopic = {id:nextId, title:_title, body:_body}
+      const newTopics = [...topics]
+      newTopics.push(newTopic);
+      setTopics(newTopics);
+      setMode('READ');
+      setId(nextId);
+      setNextId(nextId+1);
+    }}></Create>
+  } else if(mode === 'UPDATE'){
+    let title, body = null;
+    for(let i=0; i<topics.length; i++){
+      if(topics[i].id === id){
+        title = topics[i].title;
+        body = topics[i].body;
+      }
+    }
+    content = <Update title={title} body={body} onUpdate={(title, body)=>{
+      console.log(title, body);
+      const newTopics = [...topics]
+      const updatedTopic = {id:id, title:title, body:body}
+      for(let i=0; i<newTopics.length; i++){
+        if(newTopics[i].id === id){
+          newTopics[i] = updatedTopic;
           break;
         }
-        i = i + 1;
       }
-      _article = <ReadContent title={_title} desc={_desc} />;
-    } else if(this.state.mode === 'create') {
-        _article = <CreateContent onSubmit={function(_title, _desc) {
-          this.max_content_id = this.max_content_id + 1;
-          // this.state.contents.push({
-          //   id: this.max_content_id,
-          //   title: _title,
-          //   desc: _desc
-          // });
-          var _contensts = this.state.contents.concat({
-            id: this.max_content_id,
-            title: _title,
-            desc: _desc
-          });
-          this.setState({
-            contents: _contensts
-          });
-        }.bind(this)} />;
-    } else if(this.state.mode === 'update') {
-      var content = this.state.contents.find(content => content.id === this.state.selected_content_id);
-      if (content) {
-        _title = content.title;
-        _desc = content.desc;
-        _article = <CreateContent title={_title} desc={_desc} />;
-      } else {
-        _title = 'Content Not Found';
-      }
-    } 
-    return (
-      <div className="App">
-       Hello, React!
-       <Subject title={this.state.subject.title} sub={this.state.subject.sub} 
-       onChangePage={function(page){
-         this.setState({
-           mode: page
-         });
-       }.bind(this)}/>
-       {/* <header>
-         <h1><a href="/" onClick={function(e){
-           e.preventDefault();
-           this.setState({mode:'welcome'});
-         }.bind(this)}>{this.state.subject.title}</a></h1>
-         <p>{this.state.subject.sub}</p>
-       </header> */}
-       {/* <Subject title="React" sub="For UI" /> */}
-       <TOC onChangePage={function(id){
-         this.setState({
-           mode: 'read',
-           selected_content_id: Number(id)
-         });
-       }.bind(this)} contents={this.state.contents} />
-       <ReadContent title={_title} desc={_desc}/>
+      setTopics(newTopics);
+      setMode('READ');
+    }}></Update>
+  }
+  return (
+    <div>
+      <Header title="WEB" onChangeMode={()=>{
+        setMode('WELCOME');
+      }}></Header>
+      <Nav topics={topics} onChangeMode={(_id)=>{
+        setMode('READ');
+        setId(_id);
+      }}></Nav>
+      {content}
+      <ul>
+        <li><a href="/create" onClick={event=>{
+          event.preventDefault();
+          setMode('CREATE');
+        }}>Create</a></li>
+        {contextControl}
+      </ul>
     </div>
   );
-  }
 }
 
 export default App;
